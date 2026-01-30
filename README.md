@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🛡️ SankatMitra - Real-Time Disaster Alert System
 
 A full-stack disaster management platform built with React and Flask, featuring real-time alerts, smart evacuation routing, and comprehensive emergency action guidelines.
@@ -313,4 +314,13 @@ For support, email your-email@example.com or open an issue on GitHub.
 ---
 
 Made with ❤️ for disaster management and community safety.
+=======
+# Project Name: SankatMitra
+
+## Problem Statement ID: CS04DS
+
+## Team Name: The Hack Hub
+
+## College Name: Karavali Institute of Technology
+>>>>>>> 2906c5688342a821052eec290ca95b3ef0096ffa
 
