@@ -5,15 +5,16 @@
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f4f6f8;
+  background-color: #020617;
 }
 
 .dashboard-content {
   flex: 1;
-  margin-left: 240px;
-  padding: 2rem 1.5rem;
+  margin-left: 260px;
+  /* Matched to new sidebar width */
+  padding: 2.5rem 2rem;
   min-height: 100vh;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Feature page wrapper */
@@ -30,13 +31,13 @@
   margin: 0 0 0.5rem;
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: #e6eef5;
 }
 
 .feature-subtitle {
   margin: 0;
   font-size: 1rem;
-  color: #6b7280;
+  color: #94a3b8;
 }
 
 /* Mobile: Adjust content margin when sidebar is hidden */
@@ -46,4 +47,3 @@
     padding: 1.25rem 1rem;
   }
 }
-

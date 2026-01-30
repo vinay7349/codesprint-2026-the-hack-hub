@@ -224,12 +224,7 @@ function App() {
 
         <Assistant />
 
-        <footer className="app-footer">
-          <p>
-            <strong>Disclaimer:</strong> This is a community-driven alert system and
-            not an official government alert service.
-          </p>
-        </footer>
+
       </Layout>
     </ToastProvider>
   );

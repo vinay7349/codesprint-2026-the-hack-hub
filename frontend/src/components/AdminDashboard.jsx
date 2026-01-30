@@ -117,51 +117,66 @@ function AdminDashboard() {
           </p>
         </div>
 
-        <div className="admin-controls">
-          <input
-            aria-label="Search alerts by message or location"
-            placeholder="Search alerts by message or location..."
-            className="admin-search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+        <div className="admin-controls-container" style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "flex-end" }}>
+          <div className="admin-controls">
+            <input
+              aria-label="Search alerts by message or location"
+              placeholder="Search alerts..."
+              className="admin-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
 
-          <div className="severity-filter">
-            <button
-              className={`filter-pill ${filterSeverity === "all" ? "active" : ""}`}
-              onClick={() => setFilterSeverity("all")}
-            >
-              All
-            </button>
-            <button
-              className={`filter-pill ${filterSeverity === "high" ? "active" : ""}`}
-              onClick={() => setFilterSeverity("high")}
-            >
-              High
-            </button>
-            <button
-              className={`filter-pill ${filterSeverity === "medium" ? "active" : ""}`}
-              onClick={() => setFilterSeverity("medium")}
-            >
-              Medium
-            </button>
-            <button
-              className={`filter-pill ${filterSeverity === "low" ? "active" : ""}`}
-              onClick={() => setFilterSeverity("low")}
-            >
-              Low
-            </button>
+            <div className="severity-filter">
+              <button className={`filter-pill ${filterSeverity === "all" ? "active" : ""}`} onClick={() => setFilterSeverity("all")}>All</button>
+              <button className={`filter-pill ${filterSeverity === "high" ? "active" : ""}`} onClick={() => setFilterSeverity("high")}>High</button>
+              <button className={`filter-pill ${filterSeverity === "medium" ? "active" : ""}`} onClick={() => setFilterSeverity("medium")}>Medium</button>
+              <button className={`filter-pill ${filterSeverity === "low" ? "active" : ""}`} onClick={() => setFilterSeverity("low")}>Low</button>
+            </div>
+
+            <label className="realtime-toggle">
+              <input type="checkbox" checked={realtimeEnabled} onChange={(e) => setRealtimeEnabled(e.target.checked)} />
+              Realtime
+            </label>
           </div>
 
-          <label className="realtime-toggle">
-            <input
-              type="checkbox"
-              checked={realtimeEnabled}
-              onChange={(e) => setRealtimeEnabled(e.target.checked)}
-            />
-            Realtime updates
-          </label>
+          <button className="btn-export" onClick={() => {
+            const csvHeader = "Timestamp,Severity,Message,Location\n";
+            const csvRows = alerts.map(a =>
+              `"${a.timestamp}","${a.severity}","${a.message}","${a.location}"`
+            ).join("\n");
+            const blob = new Blob([csvHeader + csvRows], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `alerts_export_${Date.now()}.csv`;
+            a.click();
+          }}>
+            📥 Export CSV
+          </button>
         </div>
+      </div>
+
+      {/* Emergency Broadcast System */}
+      <div className="broadcast-section">
+        <div className="broadcast-title">
+          <span>📢</span> Emergency Broadcast System
+        </div>
+        <form className="broadcast-form" onSubmit={(e) => {
+          e.preventDefault();
+          const msg = e.target.elements.broadcastMsg.value;
+          if (!msg) return;
+          alert(`Broadcasting to all citizens: "${msg}"`);
+          e.target.reset();
+        }}>
+          <input
+            name="broadcastMsg"
+            className="broadcast-input"
+            placeholder="Type emergency alert message for all citizens..."
+            required
+          />
+          <button type="submit" className="btn-broadcast">Send Alert</button>
+        </form>
       </div>
 
       {/* Top statistics section */}
@@ -315,7 +330,12 @@ function FamilyList() {
       fetch(`${API_BASE}/shelters`).then(r => r.json())
     ]).then(([familiesData, sheltersData]) => {
       setFamilies(familiesData || []);
-      setShelters(sheltersData || []);
+      // Add mock resources if not present
+      const enhancedShelters = (sheltersData || []).map(s => ({
+        ...s,
+        resources: s.resources || { food_packs: Math.floor(Math.random() * 500), water_bottles: Math.floor(Math.random() * 1000) }
+      }));
+      setShelters(enhancedShelters);
       setLoading(false);
     });
   };
@@ -386,8 +406,24 @@ function FamilyList() {
           />
           <button type="submit" className="btn-primary" style={{ padding: "0.3rem 0.8rem", fontSize: "0.8rem", width: "auto" }}>+ Add Shelter</button>
         </form>
-        <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#0369a1" }}>
-          Available Shelters: {shelters.map(s => `${s.name} (${s.occupied}/${s.capacity})`).join(", ") || "None"}
+        Current Shelters:
+        <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.5rem" }}>
+          {shelters.map(s => (
+            <div key={s._id} style={{ background: "white", padding: "0.5rem", borderRadius: "6px", fontSize: "0.85rem", border: "1px solid #e0f2fe" }}>
+              <div style={{ fontWeight: "bold", color: "#0284c7" }}>{s.name}</div>
+              <div>Capacity: {s.occupied}/{s.capacity}</div>
+              <div className="shelter-resources-grid">
+                <div className="resource-row">
+                  <span>🥘 Food Packs:</span>
+                  <strong>{s.resources?.food_packs || 0}</strong>
+                </div>
+                <div className="resource-row">
+                  <span>💧 Water Bottles:</span>
+                  <strong>{s.resources?.water_bottles || 0}</strong>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
