@@ -5,8 +5,11 @@ import LiveAlerts from "./components/LiveAlerts";
 import EmergencyActions from "./components/EmergencyActions";
 import SmartEvacuation from "./components/SmartEvacuation";
 import AreaRisk from "./components/AreaRisk";
+import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./components/AdminDashboard";
 import FamilyRegistration from "./pages/FamilyRegistration";
+import Assistant from "./components/Assistant";
+import { ToastProvider } from "./components/Toast";
 import "./App.css";
 
 const API_BASE = "http://localhost:5000";
@@ -207,23 +210,28 @@ function LiveAlertsPage() {
  */
 function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<LiveAlertsPage />} />
-        <Route path="/emergency-actions" element={<EmergencyActions />} />
-        <Route path="/smart-evacuation" element={<SmartEvacuation />} />
-        <Route path="/area-risk" element={<AreaRisk />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/register-family" element={<FamilyRegistration />} />
-      </Routes>
+    <ToastProvider>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/live-alerts" element={<LiveAlertsPage />} />
+          <Route path="/emergency-actions" element={<EmergencyActions />} />
+          <Route path="/smart-evacuation" element={<SmartEvacuation />} />
+          <Route path="/area-risk" element={<AreaRisk />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/register-family" element={<FamilyRegistration />} />
+        </Routes>
 
-      <footer className="app-footer">
-        <p>
-          <strong>Disclaimer:</strong> This is a community-driven alert system and
-          not an official government alert service.
-        </p>
-      </footer>
-    </Layout>
+        <Assistant />
+
+        <footer className="app-footer">
+          <p>
+            <strong>Disclaimer:</strong> This is a community-driven alert system and
+            not an official government alert service.
+          </p>
+        </footer>
+      </Layout>
+    </ToastProvider>
   );
 }
 
