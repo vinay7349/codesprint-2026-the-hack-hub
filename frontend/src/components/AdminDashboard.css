@@ -1,0 +1,161 @@
+/* Dark theme for Admin Dashboard */
+.feature-page {
+  background: #0b0b0d;
+  color: #e6eef5;
+  padding: 1.25rem;
+  border-radius: 10px;
+}
+
+.admin-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.admin-controls {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.admin-search {
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  color: #e6eef5;
+  min-width: 220px;
+}
+
+.admin-search:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  border-color: rgba(99,102,241,0.6);
+}
+
+.severity-filter {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.filter-pill {
+  padding: 0.36rem 0.7rem;
+  border-radius: 999px;
+  background: transparent;
+  color: #cbd5e1;
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.filter-pill.active {
+  background: linear-gradient(90deg,#4f46e5,#06b6d4);
+  color: white;
+  border-color: transparent;
+}
+
+.realtime-toggle {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.realtime-toggle input {
+  width: 16px;
+  height: 16px;
+}
+
+/* Make cards darker and more contrasty */
+.card, .stat-card, .alert-card {
+  background: linear-gradient(180deg, #081018, #061018);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: #e6eef5;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 0.75rem;
+  margin: 0.6rem 0 1rem;
+}
+
+.stat-card {
+  padding: 0.9rem;
+  border-radius: 10px;
+}
+
+.stat-label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-top: 0.25rem;
+  color: #e6eef5;
+}
+
+.stat-caption { color: #94a3b8; font-size: 0.78rem; }
+
+/* Alert cards adjusted for dark UI */
+.admin-alerts-list { display: flex; flex-direction: column; gap: 0.7rem; }
+
+.alert-card {
+  padding: 0.9rem;
+  border-radius: 12px;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.alert-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(2,6,23,0.6); }
+
+.alert-card--dark { background: linear-gradient(180deg,#07101a,#041018); border: 1px solid rgba(255,255,255,0.03); }
+
+.alert-card--high { box-shadow: 0 6px 18px rgba(185,28,28,0.06); }
+.alert-card--medium { box-shadow: 0 6px 18px rgba(194,65,12,0.04); }
+.alert-card--low { box-shadow: 0 6px 18px rgba(21,128,61,0.04); }
+
+.severity-badge { color: white; }
+.severity-badge--high { background-color: #ef4444; }
+.severity-badge--medium { background-color: #f97316; }
+.severity-badge--low { background-color: #10b981; }
+
+.alert-message { color: #e6eef5; font-weight: 700; }
+.alert-location, .alert-meta { color: #94a3b8; }
+
+.btn-secondary {
+  background: rgba(255,255,255,0.04);
+  color: #e6eef5;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.btn-secondary:hover { background: rgba(255,255,255,0.06); }
+
+.btn-secondary.active { background: linear-gradient(90deg,#06b6d4,#4f46e5); }
+
+.alert-actions-panel {
+  margin-top: 0.45rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(-6px);
+  transition: max-height 0.28s ease, opacity 0.22s ease, transform 0.22s ease;
+}
+
+.alert-actions-panel.open { max-height: 300px; opacity: 1; transform: translateY(0); }
+
+.alert-actions-title { color: #e6eef5; margin: 0 0 0.25rem 0; }
+.alert-actions-list { color: #9fb0c6; }
+
+.admin-status-text { color: #9fb0c6; }
+
+.acknowledged { opacity: 0.7; border-style: dashed; }
+
+@media (max-width: 880px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-controls { flex-wrap: wrap; }
+}

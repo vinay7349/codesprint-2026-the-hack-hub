@@ -16,7 +16,7 @@ No smart evacuation guidance
 Authorities struggle to manage area risk efficiently
 
  ## proposed solution
- 1️⃣ Real-Time Disaster Alerts
+ 1️⃣ Real-Time Disaster Alerts.
 
 Live alerts for floods, fire, cyclone, landslides
 Location-based notifications

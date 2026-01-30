@@ -17,6 +17,7 @@ function Sidebar() {
     { icon: "🛡", label: "Emergency Actions", path: "/emergency-actions" },
     { icon: "🚗", label: "Smart Evacuation", path: "/smart-evacuation" },
     { icon: "📊", label: "Area Risk Monitoring", path: "/area-risk" },
+    { icon: "🏠", label: "Register Family", path: "/register-family" },
     { icon: "👮", label: "Admin Dashboard", path: "/admin" },
   ];
 

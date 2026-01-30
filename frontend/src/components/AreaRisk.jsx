@@ -12,11 +12,7 @@ const getSeverityLevel = (severity) => {
   return "low";
 };
 
-/**
- * Area Risk Monitoring Component
- * Shows risk cards by area with total alerts, high severity count, and risk level badge
- * Includes pulse animation for High risk areas
- */
+
 function AreaRisk() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);

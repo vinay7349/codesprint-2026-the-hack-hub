@@ -23,6 +23,8 @@ COLLECTION_NAME = "alerts"
 mongo_client = MongoClient(MONGO_URI)
 db = mongo_client[DB_NAME]
 alerts_collection = db[COLLECTION_NAME]
+families_collection = db["families"]
+shelters_collection = db["shelters"]
 
 
 KEYWORDS_HIGH_SEVERITY = ["flood", "cyclone", "earthquake", "fire", "water rising"]
@@ -168,7 +170,8 @@ def report_alert():
     }
 
     # Emit Socket.IO event to all connected clients
-    socketio.emit("new_alert", alert_for_client, broadcast=True)
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+
 
     # Mark this request against rate limiting after successful processing
     mark_request(ip)
@@ -221,6 +224,107 @@ def get_safe_route():
 
     route_payload = compute_safe_route(current_location, destination)
     return jsonify(route_payload)
+
+
+@app.route("/register_family", methods=["POST"])
+def register_family():
+    """
+    POST /register_family
+    Body: { "head_name": str, "members": int, "location": str, "phone": str }
+    """
+    data = request.get_json(silent=True) or {}
+    head_name = data.get("head_name", "").strip()
+    location = data.get("location", "").strip()
+    phone = data.get("phone", "").strip()
+    members = data.get("members", 1)
+
+    if not head_name or not location:
+        return jsonify({"error": "Name and Location are required"}), 400
+
+    family_doc = {
+        "head_name": head_name,
+        "members": members,
+        "location": location,
+        "phone": phone,
+        "status": "Safe",  # Safe, At Risk, Evacuated, In Shelter
+        "shelter_id": None,
+        "registered_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = families_collection.insert_one(family_doc)
+    return jsonify({"message": "Family registered", "id": str(result.inserted_id)}), 201
+
+
+@app.route("/families", methods=["GET"])
+def get_families():
+    """GET /families - List all registered families"""
+    cursor = families_collection.find().sort("registered_at", -1)
+    families = []
+    for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        families.append(doc)
+    return jsonify(families)
+
+
+@app.route("/shelters", methods=["GET", "POST"])
+def manage_shelters():
+    """
+    GET /shelters - List shelters
+    POST /shelters - Add a new shelter (Body: {name, location, capacity})
+    """
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        shelter_doc = {
+            "name": data.get("name"),
+            "location": data.get("location"),
+            "capacity": data.get("capacity", 50),
+            "occupied": 0
+        }
+        result = shelters_collection.insert_one(shelter_doc)
+        return jsonify({"message": "Shelter added", "id": str(result.inserted_id)}), 201
+    
+    # GET
+    cursor = shelters_collection.find()
+    shelters = []
+    for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        shelters.append(doc)
+    return jsonify(shelters)
+
+
+@app.route("/assign_shelter", methods=["POST"])
+def assign_shelter():
+    """
+    POST /assign_shelter
+    Body: { "family_id": str, "shelter_id": str }
+    """
+    data = request.get_json(silent=True) or {}
+    print(f"Assigning shelter: {data}") # Debug log
+    from bson.objectid import ObjectId
+    
+    try:
+        family_id = data.get("family_id")
+        shelter_id = data.get("shelter_id")
+        
+        if not family_id or not shelter_id:
+            return jsonify({"error": "Missing IDs"}), 400
+
+        # Update family status
+        families_collection.update_one(
+            {"_id": ObjectId(family_id)},
+            {"$set": {"status": "In Shelter", "shelter_id": shelter_id}}
+        )
+        
+        # Increment shelter occupancy (simple mock logic, could be more robust)
+        shelters_collection.update_one(
+            {"_id": ObjectId(shelter_id)},
+            {"$inc": {"occupied": 1}}
+        )
+
+        return jsonify({"message": "Assigned to shelter successfully"}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 500
 
 
 @socketio.on("connect")

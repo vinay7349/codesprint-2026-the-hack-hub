@@ -6,6 +6,7 @@ import EmergencyActions from "./components/EmergencyActions";
 import SmartEvacuation from "./components/SmartEvacuation";
 import AreaRisk from "./components/AreaRisk";
 import AdminDashboard from "./components/AdminDashboard";
+import FamilyRegistration from "./pages/FamilyRegistration";
 import "./App.css";
 
 const API_BASE = "http://localhost:5000";
@@ -213,6 +214,7 @@ function App() {
         <Route path="/smart-evacuation" element={<SmartEvacuation />} />
         <Route path="/area-risk" element={<AreaRisk />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/register-family" element={<FamilyRegistration />} />
       </Routes>
 
       <footer className="app-footer">
