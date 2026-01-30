@@ -17,7 +17,7 @@ function Sidebar() {
   // Navigation items with icons and routes
   const navItems = [
     { icon: "🚨", label: "Home", path: "/", visible: true },
-    { icon: "📢", label: "Live Alerts", path: "/live-alerts", visible: true },
+    { icon: "📢", label: "Live Alerts", path: "/live-alerts-feed", visible: true },
     { icon: "🛡", label: "Emergency Actions", path: "/emergency-actions", visible: true },
     { icon: "🚗", label: "Smart Evacuation", path: "/smart-evacuation", visible: true },
     { icon: "📊", label: "Area Risk Monitoring", path: "/area-risk", visible: true },

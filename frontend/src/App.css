@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Global layout
  * Clean, dark background with centered content and professional spacing.
  */

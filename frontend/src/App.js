@@ -11,6 +11,7 @@ import FamilyRegistration from "./pages/FamilyRegistration";
 import Assistant from "./components/Assistant";
 import UserLogin from "./pages/UserLogin";
 import AdminLogin from "./pages/AdminLogin";
+import LiveAlertsFeed from "./components/LiveAlertsFeed";
 import { ToastProvider } from "./components/Toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import "./App.css";
@@ -245,12 +246,10 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<UserLogin />} />
             <Route path="/admin/login" element={<AdminLogin />} />
-
             <Route path="/live-alerts" element={<LiveAlertsPage />} />
             <Route path="/emergency-actions" element={<EmergencyActions />} />
             <Route path="/smart-evacuation" element={<SmartEvacuation />} />
             <Route path="/area-risk" element={<AreaRisk />} />
-
             <Route
               path="/admin"
               element={
@@ -259,10 +258,9 @@ function App() {
                 </ProtectedAdminRoute>
               }
             />
-
             <Route path="/register-family" element={<FamilyRegistration />} />
+            <Route path="/live-alerts-feed" element={<LiveAlertsFeed />} />
           </Routes>
-
           <Assistant />
         </Layout>
       </ToastProvider>
