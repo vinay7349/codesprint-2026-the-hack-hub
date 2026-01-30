@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../App.css";
+import "./Assistant.css";
 
 function Assistant() {
     const [isOpen, setIsOpen] = useState(false);
