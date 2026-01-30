@@ -1,0 +1,49 @@
+/* Dashboard Layout Styles
+ * 2-column layout: fixed sidebar + dynamic content area
+ */
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f4f6f8;
+}
+
+.dashboard-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 2rem 1.5rem;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+/* Feature page wrapper */
+.feature-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-header {
+  margin-bottom: 1.5rem;
+}
+
+.feature-title {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.feature-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+/* Mobile: Adjust content margin when sidebar is hidden */
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin-left: 0;
+    padding: 1.25rem 1rem;
+  }
+}
+
