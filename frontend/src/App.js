@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Layout from "./components/Layout";
 import LiveAlerts from "./components/LiveAlerts";
 import EmergencyActions from "./components/EmergencyActions";
@@ -9,7 +9,10 @@ import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./components/AdminDashboard";
 import FamilyRegistration from "./pages/FamilyRegistration";
 import Assistant from "./components/Assistant";
+import UserLogin from "./pages/UserLogin";
+import AdminLogin from "./pages/AdminLogin";
 import { ToastProvider } from "./components/Toast";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import "./App.css";
 
 const API_BASE = "http://localhost:5000";
@@ -182,18 +185,36 @@ function ReportAlert() {
  * Combines alert reporting and live alerts viewing
  */
 function LiveAlertsPage() {
+  const { isAdmin } = useAuth();
+
   return (
     <div className="feature-page">
       <div className="feature-header">
         <h1 className="feature-title">📢 Live Alerts</h1>
         <p className="feature-subtitle">
-          Report new alerts and view real-time community-reported disaster alerts.
+          {isAdmin
+            ? "Report new alerts and view real-time community-reported disaster alerts."
+            : "View real-time community-reported disaster alerts."}
         </p>
       </div>
 
       <div className="live-alerts-layout">
         <div className="live-alerts-left">
-          <ReportAlert />
+          {isAdmin ? (
+            <ReportAlert />
+          ) : (
+            <div className="card">
+              <div className="card-header">
+                <h2 className="card-title">Report an Incident</h2>
+              </div>
+              <p style={{ color: "#94a3b8", marginBottom: "1rem" }}>
+                Only administrators can report public alerts to ensure accuracy.
+              </p>
+              <p style={{ color: "#94a3b8", fontSize: "0.9rem" }}>
+                If you are witnessing an emergency, please contact local authorities immediately.
+              </p>
+            </div>
+          )}
         </div>
         <div className="live-alerts-right">
           <LiveAlerts />
@@ -203,6 +224,13 @@ function LiveAlertsPage() {
   );
 }
 
+function ProtectedAdminRoute({ children }) {
+  const { isAdmin, loading } = useAuth();
+  if (loading) return null;
+  if (!isAdmin) return <Navigate to="/admin/login" replace />;
+  return children;
+}
+
 /**
  * Main App Component
  * Uses Layout wrapper with sidebar navigation
@@ -210,24 +238,37 @@ function LiveAlertsPage() {
  */
 function App() {
   return (
-    <ToastProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/live-alerts" element={<LiveAlertsPage />} />
-          <Route path="/emergency-actions" element={<EmergencyActions />} />
-          <Route path="/smart-evacuation" element={<SmartEvacuation />} />
-          <Route path="/area-risk" element={<AreaRisk />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/register-family" element={<FamilyRegistration />} />
-        </Routes>
+    <AuthProvider>
+      <ToastProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<UserLogin />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
 
-        <Assistant />
+            <Route path="/live-alerts" element={<LiveAlertsPage />} />
+            <Route path="/emergency-actions" element={<EmergencyActions />} />
+            <Route path="/smart-evacuation" element={<SmartEvacuation />} />
+            <Route path="/area-risk" element={<AreaRisk />} />
 
+            <Route
+              path="/admin"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminDashboard />
+                </ProtectedAdminRoute>
+              }
+            />
 
-      </Layout>
-    </ToastProvider>
+            <Route path="/register-family" element={<FamilyRegistration />} />
+          </Routes>
+
+          <Assistant />
+        </Layout>
+      </ToastProvider>
+    </AuthProvider>
   );
 }
 
 export default App;
+

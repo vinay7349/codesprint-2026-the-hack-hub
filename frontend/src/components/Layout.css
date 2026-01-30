@@ -44,6 +44,6 @@
 @media (max-width: 768px) {
   .dashboard-content {
     margin-left: 0;
-    padding: 1.25rem 1rem;
+    padding: 4rem 1rem 2rem;
   }
 }
