@@ -61,7 +61,7 @@ Monitor affected zones
     language used : python
     front end :React
     backend:Flask
-    api: leaflet
+    java script library: leaflet
 ## Usability & Impact
     user features 
     if the user register before we can find where exactly affected in areas
