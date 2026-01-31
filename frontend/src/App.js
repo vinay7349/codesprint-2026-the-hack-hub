@@ -246,7 +246,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<UserLogin />} />
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/live-alerts" element={<LiveAlertsPage />} />
+            <Route path="/live-alerts" element={<LiveAlertsFeed />} />
             <Route path="/emergency-actions" element={<EmergencyActions />} />
             <Route path="/smart-evacuation" element={<SmartEvacuation />} />
             <Route path="/area-risk" element={<AreaRisk />} />
@@ -259,7 +259,6 @@ function App() {
               }
             />
             <Route path="/register-family" element={<FamilyRegistration />} />
-            <Route path="/live-alerts-feed" element={<LiveAlertsFeed />} />
           </Routes>
           <Assistant />
         </Layout>

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
+import { Activity, Navigation, Shield, Zap, Users, ShieldCheck, Map as MapIcon, ChevronRight } from "lucide-react";
 import "../App.css";
 import "./LandingPage.css";
 
@@ -32,10 +33,10 @@ function LandingPage() {
                         </p>
                         <div className="hero-cta-group">
                             <Link to="/live-alerts" className="btn-modern btn-primary-glow">
-                                View Live Map
+                                <Activity className="w-5 h-5 mr-2" /> Live Dashboard
                             </Link>
-                            <Link to="/register-family" className="btn-modern btn-glass">
-                                Join Protection Network
+                            <Link to="/smart-evacuation" className="btn-modern btn-glass">
+                                <Navigation className="w-5 h-5 mr-2" /> Smart Evacuation
                             </Link>
                         </div>
                         <div className="hero-trust">
@@ -72,8 +73,9 @@ function LandingPage() {
                         {/* Large Card */}
                         <div className="bento-card card-large">
                             <div className="card-content">
-                                <h3>⚡ Real-Time Alerts</h3>
-                                <p>AI-verified updates instantly delivered to your device.</p>
+                                <span className="card-badge">LIVE ENGINE</span>
+                                <h3>⚡ Command Center Feed</h3>
+                                <p>Real-time, distance-sorted alerts with proximity intelligence. Stay ahead of every hazard.</p>
                             </div>
                             <div className="card-visual visual-graph"></div>
                         </div>
@@ -81,8 +83,9 @@ function LandingPage() {
                         {/* Medium Card */}
                         <div className="bento-card card-medium">
                             <div className="card-content">
-                                <h3>🧭 Smart Routing</h3>
-                                <p>Dynamic evacuation paths avoiding flood zones.</p>
+                                <span className="card-badge accent">GOOGLE MAPS</span>
+                                <h3>🧭 Smart Routing AI</h3>
+                                <p>Precision pathfinding using Google Maps Satellite & Traffic tiles.</p>
                             </div>
                             <div className="card-visual visual-map"></div>
                         </div>
@@ -90,8 +93,9 @@ function LandingPage() {
                         {/* Medium Card */}
                         <div className="bento-card card-medium">
                             <div className="card-content">
-                                <h3>👨‍👩‍👧‍👦 Family Safety</h3>
-                                <p>Instant location tracking for registered members.</p>
+                                <span className="card-badge safety">FAMILY HUB</span>
+                                <h3>👨‍👩‍👧‍👦 Rapid Assistance</h3>
+                                <p>One-click SOS signaling and secure family protection network.</p>
                             </div>
                             <div className="card-visual visual-users"></div>
                         </div>
@@ -99,9 +103,12 @@ function LandingPage() {
                         {/* Wide Card */}
                         <div className="bento-card card-wide">
                             <div className="card-content">
-                                <h3>📡 Offline-Ready Mode</h3>
-                                <p>Works even when network connectivity is intermittent (SMS fallback).</p>
+                                <h3>📡 Operations Terminal</h3>
+                                <p>Full-spectrum disaster management for community leads and administration.</p>
                             </div>
+                            <Link to="/admin" className="btn-modern btn-white text-xs py-2 px-4">
+                                Enter Terminal <ChevronRight className="w-4 h-4 ml-1" />
+                            </Link>
                         </div>
                     </div>
                 </section>

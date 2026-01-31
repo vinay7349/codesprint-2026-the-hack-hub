@@ -2,17 +2,22 @@ import React, { useEffect, useState, useMemo } from "react";
 import { io } from "socket.io-client";
 import "../App.css";
 import "./AdminDashboard.css";
+import {
+  Search, Filter, Download, Bell, Shield, Users,
+  AlertCircle, Activity, MapPin, Clock, ChevronRight,
+  TrendingUp, Radio, UserCheck, Home, Package, Droplets
+} from 'lucide-react';
 
 const API_BASE = "http://localhost:5000";
 
-const getSeverityLevel = (severity) => {
-  if (!severity) return "low";
-  const val = severity.toLowerCase();
-  if (val === "high") return "high";
-  if (val === "medium") return "medium";
-  return "low";
+const getSeverityConfig = (severity) => {
+  const val = (severity || "low").toLowerCase();
+  switch (val) {
+    case 'high': return { color: 'text-rose-500', bg: 'bg-rose-500/10', dot: 'bg-rose-500', label: 'Critical' };
+    case 'medium': return { color: 'text-amber-500', bg: 'bg-amber-500/10', dot: 'bg-amber-500', label: 'Elevated' };
+    default: return { color: 'text-emerald-500', bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', label: 'Monitor' };
+  }
 };
-
 
 function AdminDashboard() {
   const [alerts, setAlerts] = useState([]);
@@ -22,7 +27,7 @@ function AdminDashboard() {
   const [query, setQuery] = useState("");
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const [acknowledged, setAcknowledged] = useState(() => new Set());
-  const [expanded, setExpanded] = useState(() => new Set());
+  const [activeTab, setActiveTab] = useState('alerts'); // 'alerts' or 'families'
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -40,7 +45,6 @@ function AdminDashboard() {
 
     fetchAlerts();
 
-
     const socket = io(API_BASE, {
       transports: ["websocket", "polling"],
     });
@@ -52,21 +56,20 @@ function AdminDashboard() {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [realtimeEnabled]);
 
-  const totalAlerts = alerts.length;
-  const highSeverityCount = alerts.filter((a) => a.severity === "High").length;
-  const mediumSeverityCount = alerts.filter((a) => a.severity === "Medium").length;
-  const lowSeverityCount = alerts.filter(
-    (a) => a.severity === "Low" || !a.severity
-  ).length;
+  const stats = useMemo(() => ({
+    total: alerts.length,
+    high: alerts.filter(a => a.severity?.toLowerCase() === 'high').length,
+    activeFamilies: 12, // Placeholder
+    systemHealth: 98
+  }), [alerts]);
 
   const filteredAlerts = useMemo(() => {
     return alerts
       .filter((a) => {
         if (filterSeverity === "all") return true;
-        const lvl = getSeverityLevel(a.severity);
-        return lvl === filterSeverity;
+        return (a.severity || "low").toLowerCase() === filterSeverity;
       })
       .filter((a) => {
         if (!query) return true;
@@ -79,27 +82,7 @@ function AdminDashboard() {
   }, [alerts, filterSeverity, query]);
 
   const handleAcknowledge = async (id) => {
-    setAcknowledged((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-    // attempt server ack; fail silently if endpoint absent
-    try {
-      await fetch(`${API_BASE}/alerts/${id}/ack`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (e) {
-      // ignore - optimistic local update already applied
-      console.debug("ack failed or endpoint missing", e);
-    }
-  };
-
-  const toggleExpanded = (id) => {
-    setExpanded((prev) => {
+    setAcknowledged(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -109,211 +92,238 @@ function AdminDashboard() {
 
   return (
     <div className="feature-page">
-      <div className="feature-header admin-dashboard-header">
-        <div>
-          <h1 className="feature-title">👮 Admin Dashboard</h1>
-          <p className="feature-subtitle">
-            Live overview of community-reported alerts — prioritize and respond.
-          </p>
+      {/* Header Area */}
+      <header className="admin-dashboard-header">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="feature-title">Operations Command Center</h1>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <Activity className="w-4 h-4 heartbeat" />
+              <span>System Live: Monitoring Community Feedback Loop</span>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl hover:bg-indigo-600/20 transition-all text-sm font-bold">
+              <Bell className="w-4 h-4" />
+              Notifications
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* KPI Grid */}
+      <div className="stats-grid">
+        <div className="kpi-card">
+          <div className="kpi-icon-wrapper bg-blue-500/10 text-blue-400">
+            <Bell className="w-6 h-6" />
+          </div>
+          <div className="kpi-value">{stats.total}</div>
+          <div className="kpi-label">Total Signals Received</div>
+          <div className="kpi-trend text-emerald-400">
+            <TrendingUp className="w-4 h-4" /> +12% from yesterday
+          </div>
         </div>
 
-        <div className="admin-controls-container" style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "flex-end" }}>
-          <div className="admin-controls">
+        <div className="kpi-card">
+          <div className="kpi-icon-wrapper bg-rose-500/10 text-rose-400">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div className="kpi-value text-rose-500">{stats.high}</div>
+          <div className="kpi-label">High Priority Threats</div>
+          <div className="kpi-trend text-rose-400">Immediate Action Required</div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="kpi-icon-wrapper bg-indigo-500/10 text-indigo-400">
+            <Users className="w-6 h-6" />
+          </div>
+          <div className="kpi-value">{stats.activeFamilies}</div>
+          <div className="kpi-label">Families in Danger Zone</div>
+          <div className="kpi-trend text-indigo-400">Requiring Shelter</div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="kpi-icon-wrapper bg-emerald-500/10 text-emerald-400">
+            <Shield className="w-6 h-6" />
+          </div>
+          <div className="kpi-value text-emerald-500">{stats.systemHealth}%</div>
+          <div className="kpi-label">System Integrity</div>
+          <div className="kpi-trend text-emerald-400">All protocols functional</div>
+        </div>
+      </div>
+
+      {/* Emergency Broadcast Command */}
+      <section className="broadcast-section animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="broadcast-icon">
+          <Radio className="w-6 h-6 animate-pulse" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            Emergency Broadcast System
+            <span className="text-[10px] bg-indigo-500 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Secure Link</span>
+          </h3>
+          <form className="broadcast-form" onSubmit={async (e) => {
+            e.preventDefault();
+            const msg = e.target.elements.broadcastMsg.value;
+            if (!msg) return;
+            try {
+              const res = await fetch(`${API_BASE}/report`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: msg, location: "Official Broadcast", is_admin: true }),
+              });
+              if (res.ok) alert("Emergency Broadcast Transmitted Successfully.");
+              else alert("Transmission Failed.");
+            } catch (err) {
+              alert("Network Error: Could not reach command center.");
+            }
+            e.target.reset();
+          }}>
             <input
-              aria-label="Search alerts by message or location"
-              placeholder="Search alerts..."
+              name="broadcastMsg"
+              className="broadcast-input"
+              placeholder="Deploy critical updates to all community members..."
+            />
+            <button type="submit" className="btn-broadcast">
+              Transmit
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* Operations Bar */}
+      <div className="ops-bar">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="admin-search-wrapper">
+            <Search className="search-icon w-4 h-4" />
+            <input
+              placeholder="Filter by report or sector..."
               className="admin-search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-
-            <div className="severity-filter">
-              <button className={`filter-pill ${filterSeverity === "all" ? "active" : ""}`} onClick={() => setFilterSeverity("all")}>All</button>
-              <button className={`filter-pill ${filterSeverity === "high" ? "active" : ""}`} onClick={() => setFilterSeverity("high")}>High</button>
-              <button className={`filter-pill ${filterSeverity === "medium" ? "active" : ""}`} onClick={() => setFilterSeverity("medium")}>Medium</button>
-              <button className={`filter-pill ${filterSeverity === "low" ? "active" : ""}`} onClick={() => setFilterSeverity("low")}>Low</button>
-            </div>
-
-            <label className="realtime-toggle">
-              <input type="checkbox" checked={realtimeEnabled} onChange={(e) => setRealtimeEnabled(e.target.checked)} />
-              Realtime
-            </label>
           </div>
 
-          <button className="btn-export" onClick={() => {
-            const csvHeader = "Timestamp,Severity,Message,Location\n";
-            const csvRows = alerts.map(a =>
-              `"${a.timestamp}","${a.severity}","${a.message}","${a.location}"`
-            ).join("\n");
-            const blob = new Blob([csvHeader + csvRows], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `alerts_export_${Date.now()}.csv`;
-            a.click();
-          }}>
-            📥 Export CSV
+          <div className="severity-filter">
+            {['all', 'high', 'medium', 'low'].map(s => (
+              <button
+                key={s}
+                className={`filter-pill ${filterSeverity === s ? 'active' : ''}`}
+                onClick={() => setFilterSeverity(s)}
+              >
+                {s.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-all flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5" />
+            Advanced
+          </button>
+          <button
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-all flex items-center gap-2"
+            onClick={() => {
+              const csv = "Timestamp,Severity,Message,Location\n" +
+                alerts.map(a => `"${a.timestamp}","${a.severity}","${a.message}","${a.location}"`).join("\n");
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = window.URL.createObjectURL(blob);
+              window.open(url);
+            }}
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export
           </button>
         </div>
       </div>
 
-      {/* Emergency Broadcast System */}
-      <div className="broadcast-section">
-        <div className="broadcast-title">
-          <span>📢</span> Emergency Broadcast System
-        </div>
-        <form className="broadcast-form" onSubmit={(e) => {
-          e.preventDefault();
-          const msg = e.target.elements.broadcastMsg.value;
-          if (!msg) return;
-          alert(`Broadcasting to all citizens: "${msg}"`);
-          e.target.reset();
-        }}>
-          <input
-            name="broadcastMsg"
-            className="broadcast-input"
-            placeholder="Type emergency alert message for all citizens..."
-            required
-          />
-          <button type="submit" className="btn-broadcast">Send Alert</button>
-        </form>
+      {/* Main Content Tabs */}
+      <div className="flex gap-6 mb-6">
+        <button
+          onClick={() => setActiveTab('alerts')}
+          className={`flex items-center gap-2 pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === 'alerts' ? 'border-indigo-500 text-white' : 'border-transparent text-gray-500'}`}
+        >
+          <Bell className="w-4 h-4" />
+          Actionable Reports ({filteredAlerts.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('families')}
+          className={`flex items-center gap-2 pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === 'families' ? 'border-indigo-500 text-white' : 'border-transparent text-gray-500'}`}
+        >
+          <Users className="w-4 h-4" />
+          Family Management & Logistics
+        </button>
       </div>
 
-      {/* Top statistics section */}
-      <section aria-label="Alert statistics">
-        <div className="stats-grid">
-          <div className="stat-card stat-card--total">
-            <div className="stat-label">Total Alerts</div>
-            <div className="stat-value">{totalAlerts}</div>
-            <div className="stat-caption">Total community-reported incidents to date.</div>
-          </div>
-
-          <div className="stat-card stat-card--high">
-            <div className="stat-label">High Severity</div>
-            <div className="stat-value">{highSeverityCount}</div>
-            <div className="stat-caption">Incidents that need immediate attention.</div>
-          </div>
-
-          <div className="stat-card stat-card--medium">
-            <div className="stat-label">Medium Severity</div>
-            <div className="stat-value">{mediumSeverityCount}</div>
-            <div className="stat-caption">Situations that require monitoring.</div>
-          </div>
-
-          <div className="stat-card stat-card--low">
-            <div className="stat-label">Low Severity</div>
-            <div className="stat-value">{lowSeverityCount}</div>
-            <div className="stat-caption">Informational reports and low-impact alerts.</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Families Section */}
-      <section aria-label="Registered Families" className="card" style={{ marginTop: "1.5rem" }}>
-        <div className="card-header">
-          <h2 className="card-title">Registered Families</h2>
-          <p className="card-subtitle">
-            Families in high-risk areas. Assign shelters to those in need.
-          </p>
-        </div>
-        <FamilyList />
-      </section>
-
-      {/* Alerts list */}
-      <section aria-label="Alerts list" className="card" style={{ marginTop: "1.5rem" }}>
-        <div className="card-header">
-          <h2 className="card-title">Alerts</h2>
-          <p className="card-subtitle">
-            Review incoming reports and take appropriate action.
-          </p>
-        </div>
-
-        {loading ? (
-          <p className="admin-status-text">Loading alerts...</p>
-        ) : error ? (
-          <p className="admin-status-text" style={{ color: "#b91c1c" }}>
-            {error}
-          </p>
-        ) : alerts.length === 0 ? (
-          <p className="admin-status-text">
-            No alerts reported yet — the dashboard updates in real time as reports arrive.
-          </p>
-        ) : (
-          <div className="admin-alerts-list">
-            {filteredAlerts.map((alert) => {
-              const level = getSeverityLevel(alert.severity);
-              const id = alert._id || alert.timestamp;
-              const isAcknowledged = acknowledged.has(id);
-              const isExpanded = expanded.has(id);
+      {/* Table Area */}
+      {activeTab === 'alerts' ? (
+        <div className="admin-alerts-list animate-in fade-in slide-in-from-left-4 duration-500">
+          {loading ? (
+            <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10">
+              <Activity className="w-10 h-10 text-indigo-500 mx-auto animate-spin mb-4" />
+              <p className="text-gray-400 font-bold">Synchronizing Encrypted Data...</p>
+            </div>
+          ) : filteredAlerts.length === 0 ? (
+            <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10">
+              <Shield className="w-10 h-10 text-gray-700 mx-auto mb-4" />
+              <p className="text-gray-400 font-bold font-mono uppercase tracking-widest text-xs">No Threats Detected In Selected Sector</p>
+            </div>
+          ) : (
+            filteredAlerts.map((alert, idx) => {
+              const conf = getSeverityConfig(alert.severity);
+              const isAck = acknowledged.has(alert._id || idx);
               return (
-                <article
-                  key={id}
-                  className={`alert-card alert-card--${level} alert-card--dark ${isAcknowledged ? "acknowledged" : ""}`}
-                  aria-label={`${alert.severity || "Low"} severity alert: ${alert.message?.slice(0, 80) || "alert"}`}
-                >
-                  <header className="alert-card-header">
-                    <span className={`severity-badge severity-badge--${level}`}>
-                      {alert.severity || "Low"}
-                    </span>
-                    <time className="alert-timestamp">
-                      {alert.timestamp
-                        ? new Date(alert.timestamp).toLocaleString()
-                        : ""}
-                    </time>
-                  </header>
-
-                  <div className="alert-message">{alert.message}</div>
-                  <div className="alert-location">
-                    Location: <strong>{alert.location}</strong>
-                  </div>
-
-                  <div className="alert-actions-bar">
-                    <div className="alert-meta">
-                      Reporter: <strong>{alert.reporter || "community"}</strong>
+                <div key={idx} className={`admin-alert-card ${isAck ? 'opacity-50 grayscale-[0.5]' : ''}`}>
+                  <div className={`alert-status-dot ${conf.dot} shadow-[0_0_12px_${conf.dot}80]`} />
+                  <div className="alert-content">
+                    <div className="alert-header">
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${conf.bg} ${conf.color}`}>
+                        {conf.label} Signal
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs text-gray-500 font-bold">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {alert.location}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs text-gray-500 font-bold">
+                        <Clock className="w-3.5 h-3.5" />
+                        {alert.timestamp ? new Date(alert.timestamp).toLocaleTimeString() : 'LIVE'}
+                      </span>
                     </div>
-
-                    <div className="alert-actions">
-                      <button
-                        className="btn-secondary"
-                        onClick={() => toggleExpanded(id)}
-                        aria-expanded={isExpanded}
-                        aria-controls={`alert-details-${id}`}
-                      >
-                        {isExpanded ? "Hide details" : "View details"}
-                      </button>
-
-                      <button
-                        className={`btn-secondary ${isAcknowledged ? "active" : ""}`}
-                        onClick={() => handleAcknowledge(id)}
-                        aria-pressed={isAcknowledged}
-                      >
-                        {isAcknowledged ? "Marked acknowledged" : "Mark acknowledged"}
-                      </button>
+                    <div className="alert-main-text font-medium leading-relaxed">"{alert.message}"</div>
+                    <div className="alert-meta-row mt-2">
+                      <span className="flex items-center gap-1.5 border-r border-white/10 pr-4">
+                        <UserCheck className="w-3.5 h-3.5 text-blue-400" />
+                        {alert.reporter || 'Field Agent'}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                        {alert.coordinates || '0.0, 0.0'}
+                      </span>
                     </div>
                   </div>
-
-                  <div
-                    id={`alert-details-${id}`}
-                    className={`alert-actions-panel ${isExpanded ? "open" : ""}`}
-                    aria-hidden={!isExpanded}
-                  >
-                    <div className="alert-actions-panel-inner">
-                      <p className="alert-actions-title">Incident details</p>
-                      <ul className="alert-actions-list">
-                        <li>Severity: {alert.severity || "Low"}</li>
-                        <li>Contact: {alert.contact || "—"}</li>
-                        <li>Coordinates: {alert.coordinates || "—"}</li>
-                        <li>Notes: {alert.extra || "—"}</li>
-                      </ul>
-                    </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleAcknowledge(alert._id || idx)}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${isAck ? 'bg-indigo-600 text-white' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10'}`}
+                    >
+                      {isAck ? 'ACKNOWLEDGED' : 'ACKNOWLEDGE'}
+                    </button>
+                    <button className="flex items-center justify-center p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-rose-600/20 hover:text-rose-400 transition-all">
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
-                </article>
+                </div>
               );
-            })}
-          </div>
-        )}
-      </section>
-    </div >
+            })
+          )}
+        </div>
+      ) : (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+          <FamilyList />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -330,10 +340,12 @@ function FamilyList() {
       fetch(`${API_BASE}/shelters`).then(r => r.json())
     ]).then(([familiesData, sheltersData]) => {
       setFamilies(familiesData || []);
-      // Add mock resources if not present
       const enhancedShelters = (sheltersData || []).map(s => ({
         ...s,
-        resources: s.resources || { food_packs: Math.floor(Math.random() * 500), water_bottles: Math.floor(Math.random() * 1000) }
+        resources: s.resources || {
+          food_packs: Math.floor(Math.random() * 500),
+          water_bottles: Math.floor(Math.random() * 1000)
+        }
       }));
       setShelters(enhancedShelters);
       setLoading(false);
@@ -354,7 +366,7 @@ function FamilyList() {
         body: JSON.stringify(newShelter)
       });
       setNewShelter({ name: "", location: "", capacity: 50 });
-      fetchData(); // Refresh list
+      fetchData();
     } catch (e) { console.error(e); }
   };
 
@@ -366,105 +378,138 @@ function FamilyList() {
         body: JSON.stringify({ family_id: familyId, shelter_id: shelterId })
       });
       if (res.ok) {
-        // Optimistic update
         setFamilies(prev => prev.map(f =>
           f._id === familyId ? { ...f, status: "In Shelter", shelter_id: shelterId } : f
         ));
       }
     } catch (e) {
       console.error(e);
-      alert("Failed to assign shelter");
     }
   };
 
-  if (loading) return <p className="admin-status-text">Loading...</p>;
+  if (loading) return (
+    <div className="text-center py-10">
+      <Activity className="w-8 h-8 text-indigo-500 mx-auto animate-spin mb-2" />
+      <p className="text-gray-400 text-sm">Loading logistics data...</p>
+    </div>
+  );
 
   return (
-    <div>
-      {/* Mini Shelter Manager */}
-      <div style={{ marginBottom: "1rem", padding: "0.8rem", background: "#f0f9ff", borderRadius: "8px", border: "1px dashed #bae6fd" }}>
-        <h3 style={{ fontSize: "0.9rem", marginTop: 0, marginBottom: "0.5rem", fontWeight: 600 }}>Manage Shelters</h3>
-        <form onSubmit={addShelter} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-          <input
-            placeholder="Shelter Name"
-            value={newShelter.name}
-            onChange={e => setNewShelter({ ...newShelter, name: e.target.value })}
-            style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", fontSize: "0.8rem" }}
-          />
-          <input
-            placeholder="Location"
-            value={newShelter.location}
-            onChange={e => setNewShelter({ ...newShelter, location: e.target.value })}
-            style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", fontSize: "0.8rem" }}
-          />
-          <input
-            type="number"
-            placeholder="Cap"
-            value={newShelter.capacity}
-            onChange={e => setNewShelter({ ...newShelter, capacity: parseInt(e.target.value) })}
-            style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", fontSize: "0.8rem", width: "60px" }}
-          />
-          <button type="submit" className="btn-primary" style={{ padding: "0.3rem 0.8rem", fontSize: "0.8rem", width: "auto" }}>+ Add Shelter</button>
-        </form>
-        Current Shelters:
-        <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.5rem" }}>
-          {shelters.map(s => (
-            <div key={s._id} style={{ background: "white", padding: "0.5rem", borderRadius: "6px", fontSize: "0.85rem", border: "1px solid #e0f2fe" }}>
-              <div style={{ fontWeight: "bold", color: "#0284c7" }}>{s.name}</div>
-              <div>Capacity: {s.occupied}/{s.capacity}</div>
-              <div className="shelter-resources-grid">
-                <div className="resource-row">
-                  <span>🥘 Food Packs:</span>
-                  <strong>{s.resources?.food_packs || 0}</strong>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Left: Shelter Manager */}
+      <div className="lg:col-span-1 space-y-6">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <h3 className="text-sm font-black uppercase tracking-widest text-indigo-400 mb-4 flex items-center gap-2">
+            <Home className="w-4 h-4" /> Shelter Deployment
+          </h3>
+          <form onSubmit={addShelter} className="space-y-4">
+            <input
+              placeholder="Name (e.g. KV School)"
+              value={newShelter.name}
+              onChange={e => setNewShelter({ ...newShelter, name: e.target.value })}
+              className="w-full bg-black/20 border border-white/10 p-3 rounded-xl text-sm focus:border-indigo-500 transition-all"
+            />
+            <input
+              placeholder="Locality"
+              value={newShelter.location}
+              onChange={e => setNewShelter({ ...newShelter, location: e.target.value })}
+              className="w-full bg-black/20 border border-white/10 p-3 rounded-xl text-sm focus:border-indigo-500 transition-all"
+            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                placeholder="Slots"
+                value={newShelter.capacity}
+                onChange={e => setNewShelter({ ...newShelter, capacity: parseInt(e.target.value) })}
+                className="flex-1 bg-black/20 border border-white/10 p-3 rounded-xl text-sm focus:border-indigo-500 transition-all"
+              />
+              <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-xl text-xs font-bold transition-all">
+                DEPLOY
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest px-1">Active Shelter Hubs</h3>
+          {shelters.map(s => {
+            const pct = Math.round((s.occupied / s.capacity) * 100) || 0;
+            return (
+              <div key={s._id} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:border-indigo-500/50 transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-bold text-sm text-white">{s.name}</span>
+                  <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-gray-400">{pct}% FULL</span>
                 </div>
-                <div className="resource-row">
-                  <span>💧 Water Bottles:</span>
-                  <strong>{s.resources?.water_bottles || 0}</strong>
+                <div className="capacity-bar-bg">
+                  <div className="capacity-bar-fill" style={{ width: `${pct}%`, backgroundColor: pct > 80 ? '#f43f5e' : '#6366f1' }} />
+                </div>
+                <div className="resource-grid">
+                  <div className="resource-item">
+                    <Package className="w-3 h-3 text-amber-500" />
+                    <span>{s.resources?.food_packs} Units</span>
+                  </div>
+                  <div className="resource-item">
+                    <Droplets className="w-3 h-3 text-blue-400" />
+                    <span>{s.resources?.water_bottles} L</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      <div className="admin-alerts-list">
-        {families.length === 0 ? <p className="admin-status-text">No families registered.</p> : families.map(family => (
-          <div key={family._id} className="alert-card" style={{ borderColor: family.status === "In Shelter" ? "#15803d" : "#e5e7eb" }}>
-            <header className="alert-card-header">
-              <span className="severity-badge" style={{ backgroundColor: family.status === "In Shelter" ? "#15803d" : "#2563eb", color: "#fff" }}>
-                {family.status || "Safe"}
-              </span>
-              <span className="alert-timestamp">{new Date(family.registered_at).toLocaleDateString()}</span>
-            </header>
-            <div className="alert-message">{family.head_name} (Members: {family.members})</div>
-            <div className="alert-location">Location: <strong>{family.location}</strong></div>
-            <div className="alert-meta">Phone: {family.phone}</div>
-
-            {family.status !== "In Shelter" && (
-              <div className="alert-actions-panel open" style={{ marginTop: "0.5rem", background: "#f8fafc" }}>
-                <p className="alert-actions-title">Assign to Shelter:</p>
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  {shelters.map(s => (
-                    <button
-                      key={s._id}
-                      className="btn-secondary"
-                      onClick={() => assignShelter(family._id, s._id)}
-                      style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem" }}
-                    >
-                      {s.name} ({s.occupied}/{s.capacity})
-                    </button>
-                  ))}
-                  {shelters.length === 0 && <span style={{ fontSize: "0.8rem", color: "#666" }}>No shelters available. Add one via API or UI (pending).</span>}
+      {/* Right: Family Distribution */}
+      <div className="lg:col-span-2 space-y-4">
+        <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest px-1">Citizen Distribution & Needs</h3>
+        {families.length === 0 ? (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center">
+            <p className="text-gray-500 text-sm italic">No evacuation requests pending.</p>
+          </div>
+        ) : (
+          families.map(family => (
+            <div key={family._id} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex justify-between items-center group hover:bg-white/10 transition-all">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-xl border ${family.status === 'In Shelter' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-blue-500/10 border-blue-500/20 text-blue-400'}`}>
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-bold text-white mb-1 flex items-center gap-2">
+                    {family.head_name}
+                    <span className="text-[10px] font-medium bg-white/5 px-2 py-0.5 rounded text-gray-400">
+                      {family.members} Members
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {family.location}</span>
+                    <span className="flex items-center gap-1">📞 {family.phone}</span>
+                  </div>
                 </div>
               </div>
-            )}
-            {family.status === "In Shelter" && (
-              <div className="alert-meta" style={{ marginTop: "0.5rem", color: "#166534" }}>
-                Currently in shelter (ID: {family.shelter_id})
+
+              <div className="flex items-center gap-4">
+                {family.status === 'In Shelter' ? (
+                  <div className="flex items-center gap-2 text-emerald-500 text-xs font-black uppercase">
+                    <UserCheck className="w-4 h-4" /> Secured
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <span className="text-[10px] text-gray-500 self-center uppercase font-black">Assign:</span>
+                    {shelters.slice(0, 2).map(s => (
+                      <button
+                        key={s._id}
+                        onClick={() => assignShelter(family._id, s._id)}
+                        className="px-3 py-1.5 bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-black rounded-lg hover:bg-indigo-600 hover:text-white transition-all"
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

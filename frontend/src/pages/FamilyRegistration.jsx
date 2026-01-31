@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import "./FamilyRegistration.css";
 
+import { useAuth } from '../context/AuthContext';
 const API_BASE = "http://localhost:5000";
 
 function FamilyRegistration() {
+  const { loginUser } = useAuth();
   const [formData, setFormData] = useState({
     head_name: "",
     aadhaar: "",
@@ -38,14 +40,33 @@ function FamilyRegistration() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleStatusChange = (newStatus) => {
-    setFormData((prev) => ({ ...prev, status: newStatus }));
-  };
 
-  const handleSOS = () => {
-    // In a real app, this would immediately trigger an API call
-    alert("SOS Signal Sent! Rescue teams have been alerted to your registered location.");
-    setFormData((prev) => ({ ...prev, status: "help" }));
+
+  const handleSOS = async () => {
+    const confirmSOS = window.confirm("ARE YOU SURE? This will alert disaster management immediately.");
+    if (!confirmSOS) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/sos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: formData.location || "Unknown Location (GPS unavailable)",
+          aadhaar: formData.aadhaar,
+          phone: formData.phone
+        }),
+      });
+
+      if (res.ok) {
+        alert("SOS SIGNAL SENT! Rescue teams have been notified of your location.");
+        setFormData((prev) => ({ ...prev, status: "help" }));
+      } else {
+        alert("SOS Failed. Please call 112 immediately.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network Error. Please try again or call emergency.");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -56,7 +77,7 @@ function FamilyRegistration() {
       return;
     }
 
-    setSubmissionStatus("Verifying Identity...");
+    setSubmissionStatus("Registering Family...");
     setIsSubmitting(true);
 
     try {
@@ -71,7 +92,8 @@ function FamilyRegistration() {
       });
 
       if (res.ok) {
-        setSubmissionStatus("Verification Successful! Family Registered.");
+        setSubmissionStatus("Family Registered Successfully. Identity Linked.");
+        loginUser({ ...formData, isAadhaarVerified: true });
         // Optional: clear form or redirect
         setFormData({
           head_name: "",
@@ -114,22 +136,13 @@ function FamilyRegistration() {
       <header className="fr-header">
         <h1 className="fr-title">Family Safety Registry</h1>
         <p className="fr-subtitle">
-          Identity-verified registration for flood & cyclone rescue.
+          Pre-register your family to ensure expedited rescue operations and priority shelter allocation.
           <br />
-          <strong>Aadhaar Verified • Official Disaster Management</strong>
+          <strong>Proactive Disaster Response • Official Government Registry</strong>
         </p>
       </header>
 
       <div className="fr-card">
-        {/* AI Risk Awareness */}
-        <div className="ai-risk-box">
-          <div className="ai-icon">🧠</div>
-          <div className="ai-text">
-            <h4>AI Risk Assessment</h4>
-            <p>{getRiskMessage()}</p>
-          </div>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="fr-grid">
             {/* Left Column */}
@@ -232,43 +245,7 @@ function FamilyRegistration() {
               />
             </div>
 
-            <div className="fr-group full-width">
-              <div className="safety-status-group">
-                <label className="fr-label">Current Safety Status</label>
-                <div className="status-options">
-                  <label>
-                    <input
-                      type="radio"
-                      name="status"
-                      className="status-radio"
-                      checked={formData.status === 'safe'}
-                      onChange={() => handleStatusChange('safe')}
-                    />
-                    <div className="status-chip safe">🟢 Safe</div>
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="status"
-                      className="status-radio"
-                      checked={formData.status === 'help'}
-                      onChange={() => handleStatusChange('help')}
-                    />
-                    <div className="status-chip help">🔴 Needs Help</div>
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="status"
-                      className="status-radio"
-                      checked={formData.status === 'missing'}
-                      onChange={() => handleStatusChange('missing')}
-                    />
-                    <div className="status-chip missing">🟠 Missing Member</div>
-                  </label>
-                </div>
-              </div>
-            </div>
+
 
           </div>
 
@@ -278,7 +255,7 @@ function FamilyRegistration() {
         </form>
 
         {submissionStatus && (
-          <div style={{ marginTop: "1.5rem", textAlign: "center", color: "#60a5fa", fontWeight: "600" }}>
+          <div style={{ marginTop: "1.5rem", textAlign: "center", color: submissionStatus.includes("Successful") ? "#10b981" : "#ef4444", fontWeight: "600" }}>
             {submissionStatus}
           </div>
         )}

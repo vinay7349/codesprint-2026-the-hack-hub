@@ -16,11 +16,8 @@
 
 .family-registration-container {
   min-height: 100vh;
-  /* Dark textured background */
-  background: 
-    radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.3) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(220, 38, 38, 0.15) 0%, transparent 40%),
-    #0f172a; /* Slate 900 */
+  /* Dark, stable professional background */
+  background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
   padding: 2rem 1rem;
   font-family: 'Inter', sans-serif;
   color: var(--text-primary);
@@ -74,7 +71,7 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -109,7 +106,9 @@
   letter-spacing: 0.05em;
 }
 
-.fr-input, .fr-textarea, .fr-select {
+.fr-input,
+.fr-textarea,
+.fr-select {
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid var(--glass-border);
   border-radius: 0.75rem;
@@ -119,7 +118,9 @@
   transition: all 0.3s ease;
 }
 
-.fr-input:focus, .fr-textarea:focus, .fr-select:focus {
+.fr-input:focus,
+.fr-textarea:focus,
+.fr-select:focus {
   outline: none;
   border-color: var(--emergency-blue);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
@@ -185,9 +186,20 @@
 }
 
 @keyframes pulse-red {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
 }
 
 /* AI Alert Box */
@@ -251,19 +263,19 @@
   gap: 0.5rem;
 }
 
-.status-radio:checked + .status-chip.safe {
+.status-radio:checked+.status-chip.safe {
   background: rgba(34, 197, 94, 0.2);
   border-color: var(--safe-green);
   color: var(--safe-green);
 }
 
-.status-radio:checked + .status-chip.help {
+.status-radio:checked+.status-chip.help {
   background: rgba(239, 68, 68, 0.2);
   border-color: var(--emergency-red);
   color: var(--emergency-red);
 }
 
-.status-radio:checked + .status-chip.missing {
+.status-radio:checked+.status-chip.missing {
   background: rgba(249, 115, 22, 0.2);
   border-color: var(--emergency-orange);
   color: var(--emergency-orange);

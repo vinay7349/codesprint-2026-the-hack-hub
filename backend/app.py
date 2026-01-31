@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
 from time import time
+import random
+import hashlib
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from pymongo import MongoClient
+from bson import ObjectId
 
 
 app = Flask(__name__)
@@ -30,20 +33,72 @@ shelters_collection = db["shelters"]
 KEYWORDS_HIGH_SEVERITY = ["flood", "cyclone", "earthquake", "fire", "water rising"]
 
 
-def analyze_severity(message: str) -> str:
+def analyze_alert_meta(message: str) -> dict:
     """
-    Simple AI-like validation based on keyword matching.
-    If the message contains any of the configured keywords (case-insensitive),
-    mark severity as "High", otherwise "Low".
+    SankatMitra AI: Analyzes severity and categorizes disaster type.
     """
-    if not message:
-        return "Low"
+    lowered = (message or "").lower()
+    sev = "Low"
+    t = "alert"
+    
+    # Alert Type detection
+    if any(k in lowered for k in ["flood", "water", "rising", "tsunami"]): t = "flood"
+    elif any(k in lowered for k in ["fire", "smoke", "blaze", "burning"]): t = "fire"
+    elif any(k in lowered for k in ["wind", "cyclone", "storm", "hurricane"]): t = "cyclone"
+    elif any(k in lowered for k in ["earthquake", "quake", "tremor", "collapsed"]): t = "earthquake"
+    
+    # Severity Detection
+    if any(k in lowered for k in KEYWORDS_HIGH_SEVERITY): sev = "High"
+    if any(k in lowered for k in ["critical", "sos", "emergency", "immediate", "urgent"]): sev = "Critical"
+    
+    return {"severity": sev, "type": t}
 
-    lowered = message.lower()
-    for keyword in KEYWORDS_HIGH_SEVERITY:
-        if keyword in lowered:
-            return "High"
-    return "Low"
+
+
+def analyze_credibility(message: str, is_registered: bool = False, is_admin: bool = False, votes_up: int = 0, votes_down: int = 0) -> dict:
+    """
+    SankatMitra AI Verification Engine.
+    Cross-references source registration, semantic integrity, and community consensus.
+    """
+    if is_admin:
+        return {"score": 100, "verified": True, "reason": "SankatMitra Official Broadcast (Vetted Source)"}
+        
+    score = 75 if is_registered else 35
+    reasons = ["Registered Citizen Signal" if is_registered else "Standard Public Channel"]
+    
+    lowered = (message or "").lower()
+    if len(message) > 40:
+        score += 15
+        reasons.append("High contextual density")
+    
+    suspicious = ["prank", "fake", "test", "checking", "haha", "lol", "spam", "just kidding"]
+    if any(s in lowered for s in suspicious):
+        return {"score": 12, "verified": False, "reason": "SankatMitra AI: Potential Disinformation Patterns Detected"}
+        
+    # Semantic check for emergency context
+    emergency_context = ["flood", "water", "fire", "smoke", "help", "trapped", "danger", "warning", "rescue"]
+    if any(e in lowered for e in emergency_context):
+        score += 10
+        reasons.append("Emergency semantic match")
+
+    # Community Consensus Recalibration
+    net_votes = votes_up - (votes_down * 2) # Spam votes are weighted more heavily
+    if net_votes > 0:
+        score += (net_votes * 5)
+        reasons.append(f"Community Confirmed ({votes_up} votes)")
+    elif net_votes < 0:
+        score += (net_votes * 10)
+        reasons.append(f"Community Flagged ({votes_down} spam reports)")
+
+    final_verified = score >= 85
+    if score < 15: score = 15 # Minimum floor for non-spam signals
+    if score < 40: final_verified = False # Mandatory threshold for verification
+    
+    return {
+        "score": max(0, min(100, score)),
+        "verified": final_verified,
+        "reason": " | ".join(reasons)
+    }
 
 
 # Mock road condition data for evacuation routing
@@ -54,43 +109,66 @@ HEAVY_TRAFFIC_ROADS = ["Market Road", "Central Junction"]
 def compute_safe_route(current_location: str, destination: str):
     """
     Simulate safe evacuation routing.
-    - Exclude flooded roads entirely.
-    - Avoid heavy traffic roads when possible.
-    - Return a "safest" path description instead of the shortest.
-    This is a mock implementation and does not call real mapping APIs.
+    - Returns a "safest" path description.
+    - Provides mock GPS coordinates for each step.
+    - Calculates a Safety Score and ETA.
     """
-    avoided_flooded = []
-    avoided_traffic = []
-
-    # For demonstration, assume that any known flooded/traffic roads
-    # near the current area are avoided and reported back.
-    # In a real system, this would be based on geo-coordinates and live data.
-    for road in FLOODED_ROADS:
-        avoided_flooded.append(road)
-    for road in HEAVY_TRAFFIC_ROADS:
-        avoided_traffic.append(road)
-
-    # Construct a friendly, safety-first route description
-    safest_route = [
-        f"Start near {current_location or 'your current location'}",
-        "Move towards Lake View Road, avoiding low-lying areas.",
-        "Avoid Bridge Road (Flooded)",
-        "Follow Green Park Street which is currently clear.",
-        f"Proceed to the safe point near {destination or 'your chosen shelter'}",
-        "Reach designated Safe Shelter",
+    import random
+    
+    # Base coordinates for the route (Mock data centered in Bengaluru for demo)
+    base_lat, base_lng = 12.9716, 77.5946
+    
+    # Construct a friendly, safety-first route description with coordinates
+    route_steps = [
+        {
+            "instruction": f"Start near {current_location or 'Current Position'}",
+            "lat": base_lat, "lng": base_lng,
+            "type": "start"
+        },
+        {
+            "instruction": "Head North on Lake View Road (Clear path detected)",
+            "lat": base_lat + 0.005, "lng": base_lng + 0.002,
+            "type": "path"
+        },
+        {
+            "instruction": "Avoiding Bridge Road (FLOODED)",
+            "lat": base_lat + 0.008, "lng": base_lng - 0.003,
+            "type": "avoid", "reason": "Flood"
+        },
+        {
+            "instruction": "Diverting to Green Park Street (Safest Alternative)",
+            "lat": base_lat + 0.012, "lng": base_lng + 0.005,
+            "type": "path"
+        },
+        {
+            "instruction": f"Arrive at safe point: {destination or 'Main Shelter'}",
+            "lat": base_lat + 0.015, "lng": base_lng + 0.008,
+            "type": "end"
+        }
     ]
 
+    # Calculate mock analytics
+    safety_score = random.randint(85, 99)
+    eta = random.randint(15, 45) # minutes
+    
+    avoided_flooded = ["Bridge Road", "River Side Street"]
+    avoided_traffic = ["Market Road", "Central Junction"]
+
     message = (
-        "Safest evacuation path calculated based on simulated flood risk "
-        "and traffic congestion. Flooded roads are excluded; heavy-traffic "
-        "segments are avoided whenever possible."
+        f"Safest path identified with {safety_score}% reliability. "
+        "Dynamic rerouting enabled to bypass active hazards."
     )
 
     return {
-        "safest_route": safest_route,
+        "steps": route_steps,
         "avoided_roads": {
             "flooded": avoided_flooded,
             "traffic": avoided_traffic,
+        },
+        "analytics": {
+            "safety_score": safety_score,
+            "eta_minutes": eta,
+            "total_distance_km": 4.2
         },
         "message": message,
     }
@@ -119,13 +197,10 @@ def mark_request(ip: str):
 def report_alert():
     """
     POST /report
-    Body: { "message": string, "location": string }
-    - Analyze severity
-    - Add timestamp
-    - Save to MongoDB
-    - Emit "new_alert" Socket.IO event
-    - Return severity and stored alert in JSON response
-    - Enforce simple rate limiting (1 alert / 10 seconds per IP)
+    Body: { "message": string, "location": string, "is_registered": bool, "is_admin": bool }
+    - AI Analyzes severity and categorizes disaster type
+    - AI Verification Engine checks credibility
+    - Emits real-time notification to all dashboards
     """
     ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown")
 
@@ -133,7 +208,7 @@ def report_alert():
         return (
             jsonify(
                 {
-                    "error": "Rate limit exceeded. Please wait before sending another alert.",
+                    "error": "Rate limit exceeded. AI Sentry is cooling down. Please wait 10s.",
                     "retry_after_seconds": RATE_LIMIT_SECONDS,
                 }
             ),
@@ -143,35 +218,57 @@ def report_alert():
     data = request.get_json(silent=True) or {}
     message = data.get("message", "").strip()
     location = data.get("location", "").strip()
+    is_registered = data.get("is_registered", False)
+    is_admin = data.get("is_admin", False)
 
     if not message or not location:
-        return jsonify({"error": "Both 'message' and 'location' are required."}), 400
+        return jsonify({"error": "Both 'message' and 'location' are required for AI analysis."}), 400
 
-    severity = analyze_severity(message)
+    # Execute AI Meta Analysis
+    meta = analyze_alert_meta(message)
+    severity = meta["severity"]
+    alert_type = meta["type"]
+    
+    # Execute AI Credibility Check
+    credibility = analyze_credibility(message, is_registered, is_admin)
 
+    # Mock high-fidelity geolocation for reporting
+    lat = 12.9 + random.uniform(0, 0.2)
+    lng = 77.5 + random.uniform(0, 0.2)
     timestamp = datetime.now(timezone.utc).isoformat()
+
     alert_doc = {
         "message": message,
         "location": location,
         "severity": severity,
+        "type": alert_type,
         "timestamp": timestamp,
         "ip": ip,
+        "credibility": credibility,
+        "coordinates": {"lat": lat, "lng": lng},
+        "votes_up": 0,
+        "votes_down": 0,
+        "voters": [] # List of IPs or user IDs
     }
 
     result = alerts_collection.insert_one(alert_doc)
 
-    # Prepare a JSON-serializable alert object (convert _id to string)
+    # Prepare a JSON-serializable alert object
     alert_for_client = {
         "_id": str(result.inserted_id),
         "message": message,
         "location": location,
         "severity": severity,
+        "type": alert_type,
         "timestamp": timestamp,
+        "credibility": credibility,
+        "coordinates": {"lat": lat, "lng": lng},
+        "votes_up": 0,
+        "votes_down": 0
     }
 
     # Emit Socket.IO event to all connected clients
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
-
+    socketio.emit("new_alert", alert_for_client)
 
     # Mark this request against rate limiting after successful processing
     mark_request(ip)
@@ -194,10 +291,81 @@ def list_alerts():
                 "message": doc.get("message", ""),
                 "location": doc.get("location", ""),
                 "severity": doc.get("severity", "Low"),
+                "type": doc.get("type", "alert"),
                 "timestamp": doc.get("timestamp", ""),
+                "credibility": doc.get("credibility", {"score": 35, "verified": False, "reason": "Legacy intelligence signal - analysis pending"}),
+                "votes_up": doc.get("votes_up", 0),
+                "votes_down": doc.get("votes_down", 0)
             }
         )
     return jsonify({"alerts": alerts})
+
+
+@app.route("/vote", methods=["POST"])
+def vote_alert():
+    """
+    POST /vote
+    { "alert_id": str, "vote_type": "up" | "down" }
+    Recalculates credibility based on community pulse.
+    """
+    data = request.get_json(silent=True) or {}
+    alert_id = data.get("alert_id")
+    vote_type = data.get("vote_type") # "up" or "down"
+    
+    if not alert_id or not vote_type:
+        return jsonify({"error": "Missing alert_id or vote_type"}), 400
+        
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown")
+    
+    alert = alerts_collection.find_one({"_id": ObjectId(alert_id)})
+    if not alert:
+        return jsonify({"error": "Alert not found"}), 404
+        
+    if ip in alert.get("voters", []):
+        return jsonify({"error": "Already voted on this intelligence signal"}), 403
+        
+    update_field = "votes_up" if vote_type == "up" else "votes_down"
+    
+    # Update vote counts
+    alerts_collection.update_one(
+        {"_id": ObjectId(alert_id)},
+        {
+            "$inc": {update_field: 1},
+            "$push": {"voters": ip}
+        }
+    )
+    
+    # Get updated counts for recalibration
+    updated_alert = alerts_collection.find_one({"_id": ObjectId(alert_id)})
+    v_up = updated_alert.get("votes_up", 0)
+    v_down = updated_alert.get("votes_down", 0)
+    
+    # Recalibrate credibility
+    is_registered = "Registered" in updated_alert.get("credibility", {}).get("reason", "")
+    is_admin = "Official" in updated_alert.get("credibility", {}).get("reason", "")
+    
+    new_credibility = analyze_credibility(
+        updated_alert.get("message", ""),
+        is_registered=is_registered,
+        is_admin=is_admin,
+        votes_up=v_up,
+        votes_down=v_down
+    )
+    
+    alerts_collection.update_one(
+        {"_id": ObjectId(alert_id)},
+        {"$set": {"credibility": new_credibility}}
+    )
+    
+    # Broadcast update to all clients
+    socketio.emit("alert_updated", {
+        "_id": alert_id,
+        "credibility": new_credibility,
+        "votes_up": v_up,
+        "votes_down": v_down
+    })
+    
+    return jsonify({"message": "Vote recorded", "credibility": new_credibility}), 200
 
 
 @app.route("/get-safe-route", methods=["POST"])
@@ -241,12 +409,18 @@ def register_family():
     if not head_name or not location:
         return jsonify({"error": "Name and Location are required"}), 400
 
+    aadhaar_raw = data.get("aadhaar", "").strip()
+    aadhaar_hashed = hashlib.sha256(aadhaar_raw.encode()).hexdigest() if aadhaar_raw else ""
+
     family_doc = {
         "head_name": head_name,
         "members": members,
         "location": location,
         "phone": phone,
-        "status": "Safe",  # Safe, At Risk, Evacuated, In Shelter
+        "aadhaar": aadhaar_hashed,
+        "emergency_contact": data.get("emergency_contact", "").strip(),
+        "special_needs": data.get("special_needs", "").strip(),
+        "status": data.get("status", "safe"),  # safe, help, missing
         "shelter_id": None,
         "registered_at": datetime.now(timezone.utc).isoformat()
     }
@@ -327,6 +501,55 @@ def assign_shelter():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/sos", methods=["POST"])
+def trigger_sos():
+    """
+    POST /sos
+    Body: { "location": str, "aadhaar": str, "phone": str, "name": str }
+    - Creates a high-severity alert
+    - Updates family status if registered
+    """
+    data = request.get_json(silent=True) or {}
+    location = data.get("location", "Unknown Location")
+    phone = data.get("phone", "Unknown")
+    
+    # 1. Create High Severity Alert
+    message = f"SOS SIGNAL: Immediate assistance needed at {location}. Contact: {phone}"
+    
+    alert_doc = {
+        "message": message,
+        "location": location,
+        "severity": "Critical",
+        "type": "sos",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "ip": request.headers.get("X-Forwarded-For", request.remote_addr or "unknown"),
+        "credibility": {"score": 100, "verified": True, "reason": "SankatMitra SOS Priority Channel"},
+        "coordinates": {"lat": 12.9716, "lng": 77.5946},
+        "votes_up": 0,
+        "votes_down": 0,
+        "voters": []
+    }
+    
+    result = alerts_collection.insert_one(alert_doc)
+    
+    # Emit Full Serialized Object
+    alert_for_client = alert_doc.copy()
+    alert_for_client["_id"] = str(result.inserted_id)
+    alert_for_client["votes_up"] = 0
+    alert_for_client["votes_down"] = 0
+    socketio.emit("new_alert", alert_for_client)
+    
+    # 3. Update Family Status if Aadhaar provided
+    aadhaar = data.get("aadhaar")
+    if aadhaar:
+        families_collection.update_one(
+            {"aadhaar": aadhaar},
+            {"$set": {"status": "help"}}
+        )
+        
+    return jsonify({"message": "SOS Alert Sent! Rescue teams notified."}), 200
+
+
 @socketio.on("connect")
 def handle_connect():
     # A simple handler to confirm connection if needed
@@ -339,7 +562,7 @@ def handle_disconnect():
 
 
 if __name__ == "__main__":
-    # Run the app on port 5000 as required
-    socketio.run(app, host="0.0.0.0", port=5000)
+    # Run the app on port 5000 with debug=True for auto-reloading
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
 
 

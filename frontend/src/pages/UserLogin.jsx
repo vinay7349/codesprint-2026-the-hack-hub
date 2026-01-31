@@ -19,7 +19,7 @@ function UserLogin() {
         // Mock Login
         setTimeout(() => {
             if (email && password) {
-                loginUser({ email, name: email.split("@")[0] });
+                loginUser({ email, name: email.split("@")[0], isAadhaarVerified: true });
                 navigate("/");
             } else {
                 setError("Please enter valid credentials.");

@@ -368,43 +368,75 @@
  * BENTO GRID SECTION
  */
 .bento-section {
-  padding: 6rem 0;
+  padding: 8rem 0;
+  position: relative;
 }
 
 .section-head {
   text-align: center;
-  margin-bottom: 4rem;
+  margin-bottom: 5rem;
 }
 
 .section-head h2 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 1rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #ffffff, #94a3b8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .section-head p {
   color: var(--text-muted);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 250px);
+  grid-template-rows: repeat(2, 280px);
+  /* Increased height */
   gap: 1.5rem;
 }
 
 .bento-card {
-  background: var(--bg-card);
-  border: none;
-  border-radius: 20px;
-  padding: 1.5rem;
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 2rem;
   overflow: hidden;
   position: relative;
-  transition: transform 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .bento-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px);
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.bento-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.1), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.bento-card:hover::before {
+  opacity: 1;
 }
 
 .card-large {
@@ -420,76 +452,208 @@
 .card-wide {
   grid-column: span 3;
   grid-row: span 1;
-  height: 150px;
+  height: 200px;
+  /* Specific height for wide card */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-content {
+  position: relative;
+  z-index: 2;
 }
 
 .card-content h3 {
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.card-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.card-badge.accent {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.card-badge.safety {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
 }
 
 .card-content p {
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Visuals for Bento Cards */
+.card-visual {
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.4;
+  transition: all 0.5s ease;
+}
+
+.visual-graph {
+  background: #3b82f6;
+}
+
+.visual-map {
+  background: #10b981;
+}
+
+.visual-users {
+  background: #f59e0b;
+}
+
+.bento-card:hover .card-visual {
+  transform: scale(1.2);
+  opacity: 0.6;
 }
 
 /* 
  * STEPS SECTION
  */
 .steps-section {
-  padding: 4rem 0;
+  padding: 8rem 0;
+  background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.4), transparent);
 }
 
 .steps-container {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  border-top: none;
+  align-items: stretch;
+  gap: 2rem;
   padding-top: 2rem;
 }
 
 .step-item {
   flex: 1;
-  padding: 0 1rem;
+  padding: 2rem;
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.step-item:hover {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(59, 130, 246, 0.2);
+  transform: translateY(-5px);
 }
 
 .step-num {
-  font-size: 3rem;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.05);
-  margin-bottom: 0.5rem;
+  font-size: 4rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.03);
+  line-height: 1;
+  margin-bottom: 1rem;
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  transition: color 0.3s ease;
+}
+
+.step-item:hover .step-num {
+  color: rgba(59, 130, 246, 0.1);
+}
+
+.step-item h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #f1f5f9;
+}
+
+.step-item p {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  line-height: 1.6;
 }
 
 .step-divider {
-  width: 1px;
-  height: 100px;
-  background: rgba(255, 255, 255, 0.05);
+  display: none;
+  /* Removed vertical dividers for card style steps */
 }
 
 /* 
  * CTA SECTION
  */
 .final-cta {
-  padding: 6rem 0;
+  padding: 8rem 0;
   text-align: center;
 }
 
 .cta-box {
-  background: linear-gradient(135deg, #1e3a8a, #1e1b4b);
-  padding: 4rem 2rem;
-  border-radius: 24px;
+  background: linear-gradient(135deg, #1e3a8a, #0f172a);
+  padding: 5rem 2rem;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px -10px rgba(30, 58, 138, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.2), transparent 70%);
+}
+
+.cta-box h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #fff;
+  position: relative;
+  z-index: 2;
+}
+
+.cta-box p {
+  color: #cbd5e1;
+  font-size: 1.2rem;
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 2;
 }
 
 .btn-white {
-  background: linear-gradient(135deg, #06b6d4, #10b981);
-  color: #ffffff;
-  font-weight: 600;
+  background: #fff;
+  color: #1e3a8a;
+  font-weight: 700;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  position: relative;
+  z-index: 2;
 }
 
 .btn-white:hover {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
-  transform: translateY(-2px);
+  background: #f1f5f9;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 /* MOBILE RESPONSIVE */
@@ -497,6 +661,8 @@
   .hero-section {
     flex-direction: column;
     text-align: center;
+    padding-top: 6rem;
+    /* Added padding for mobile header clearance */
   }
 
   .hero-content {
@@ -518,14 +684,19 @@
     grid-column: span 1;
   }
 
-  .steps-container {
+  .card-wide {
+    height: auto;
     flex-direction: column;
-    gap: 2rem;
-    text-align: center;
+    align-items: flex-start;
   }
 
-  .step-divider {
-    display: none;
+  .steps-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .section-head h2 {
+    font-size: 2rem;
   }
 }
 
